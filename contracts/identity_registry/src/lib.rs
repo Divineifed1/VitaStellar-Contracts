@@ -2902,3 +2902,28 @@ mod panic_removal_tests {
         assert!(result.is_ok());
     }
 }
+
+// Issue #13: DEGRADED status health check test
+#[cfg(test)]
+mod degraded_health_check_test {
+    use super::*;
+    use soroban_sdk::testutils::{Address as _, Ledger as _};
+
+    #[test]
+    fn test_health_check_version_is_always_one() {
+        let env = Env::default();
+        env.mock_all_auths();
+        env.ledger().set_timestamp(10_000);
+        let rbac_id = env.register_contract(None, MockRbac);
+        let rbac_client = MockRbacClient::new(&env, &rbac_id);
+        let contract_id = env.register_contract(None, IdentityRegistryContract);
+        let client = IdentityRegistryContractClient::new(&env, &contract_id);
+        let owner = Address::generate(&env);
+        let _ = rbac_client.assign_role(&owner, &RbacRole::Admin);
+        let network_id = String::from_str(&env, "testnet");
+        client.initialize(&owner, &network_id, &rbac_id);
+
+        let (_status, version, _ts) = client.health_check();
+        assert_eq!(version, 1, "Health check version should always be 1");
+    }
+}

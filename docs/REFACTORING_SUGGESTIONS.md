@@ -39,8 +39,8 @@ cargo clippy --all -- -W dead_code 2>&1 | grep "warning: .* is never used"
 ```
 
 Known candidates (from last audit):
-- `contracts/ai_analytics/src/admin.rs` — `get_admin` function appears unused externally
-- `contracts/credential_notifications/src/lib.rs` — `initialize` is a no-op stub
+- ~~`contracts/ai_analytics/src/admin.rs` — `get_admin` function appears unused externally~~ ✅ **Resolved** — `ai_analytics` contract and its `admin.rs` no longer exist in the workspace; dead code removed by omission.
+- ~~`contracts/credential_notifications/src/lib.rs` — `initialize` is a no-op stub~~ ✅ **Resolved** — `credential_notifications` contract no longer exists in the workspace; stub removed by omission.
 
 ### 4. Performance Optimization Suggestions
 

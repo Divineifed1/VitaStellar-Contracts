@@ -13,8 +13,14 @@ pub fn recursive_commitment(env: &Env, proof: &RecursiveProof) -> BytesN<32> {
     let mut msg = Bytes::new(env);
     msg.append(&Bytes::from_slice(env, REC_DOMAIN));
     msg.append(&Bytes::from_slice(env, &proof.base_proof_id.to_array()));
-    msg.append(&Bytes::from_slice(env, &proof.recursive_proof.vk_hash.to_array()));
-    msg.append(&Bytes::from_slice(env, &proof.composition_depth.to_be_bytes()));
+    msg.append(&Bytes::from_slice(
+        env,
+        &proof.recursive_proof.vk_hash.to_array(),
+    ));
+    msg.append(&Bytes::from_slice(
+        env,
+        &proof.composition_depth.to_be_bytes(),
+    ));
     env.crypto().sha256(&msg).into()
 }
 
@@ -29,10 +35,7 @@ pub fn verify_recursive_step(env: &Env, proof: &RecursiveProof) -> Result<(), Er
     let expected = recursive_commitment(env, proof);
     let expected_arr = expected.to_array();
     for i in 0u32..32u32 {
-        let actual = proof
-            .aggregated_vk
-            .get(i)
-            .ok_or(Error::InvalidProof)?;
+        let actual = proof.aggregated_vk.get(i).ok_or(Error::InvalidProof)?;
         if actual != expected_arr[i as usize] {
             return Err(Error::InvalidProof);
         }

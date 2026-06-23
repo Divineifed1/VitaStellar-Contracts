@@ -376,7 +376,16 @@ fn register_base_proof(
     let admin = Address::generate(env);
     let circuit_id = String::from_str(env, "base_circuit");
     client.register_circuit(
-        &admin, &circuit_id, &ZKPType::SNARK, &1, &1, &10, &128, vk, pk, &false,
+        &admin,
+        &circuit_id,
+        &ZKPType::SNARK,
+        &1,
+        &1,
+        &10,
+        &128,
+        vk,
+        pk,
+        &false,
     );
     let submitter = Address::generate(env);
     let inputs = vec![env, Bytes::from_slice(env, b"base_input")];
@@ -616,8 +625,12 @@ fn test_recursive_proof_tampered_last_byte_rejected() {
     agg_bytes[31] ^= 0xff;
     let composer = Address::generate(&env);
     let r = client.try_create_recursive_proof(
-        &composer, &base_id, &rp.recursive_proof,
-        &Bytes::from_slice(&env, &agg_bytes), &1, &5_000,
+        &composer,
+        &base_id,
+        &rp.recursive_proof,
+        &Bytes::from_slice(&env, &agg_bytes),
+        &1,
+        &5_000,
     );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
@@ -634,7 +647,12 @@ fn test_recursive_proof_extra_vk_bytes_still_passes() {
     extended.append(&Bytes::from_slice(&env, b"extra_data"));
     let composer = Address::generate(&env);
     client.create_recursive_proof(
-        &composer, &base_id, &rp.recursive_proof, &extended, &1, &5_000,
+        &composer,
+        &base_id,
+        &rp.recursive_proof,
+        &extended,
+        &1,
+        &5_000,
     );
 }
 
@@ -757,9 +775,17 @@ fn test_recursive_proof_prop_any_byte_flip_in_commitment_fails() {
         tampered[i] ^= 0x40;
         let composer = Address::generate(&env);
         let r = client.try_create_recursive_proof(
-            &composer, &base_id, &rp.recursive_proof,
-            &Bytes::from_slice(&env, &tampered), &1, &5_000,
+            &composer,
+            &base_id,
+            &rp.recursive_proof,
+            &Bytes::from_slice(&env, &tampered),
+            &1,
+            &5_000,
         );
-        assert_eq!(r, Err(Ok(Error::InvalidProof)), "flip at byte {i} should fail");
+        assert_eq!(
+            r,
+            Err(Ok(Error::InvalidProof)),
+            "flip at byte {i} should fail"
+        );
     }
 }

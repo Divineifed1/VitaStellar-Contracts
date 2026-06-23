@@ -1,7 +1,7 @@
 extern crate std;
 
-use super::*;
 use super::verifier::proof_commitment;
+use super::*;
 use soroban_sdk::testutils::{Address as _, Ledger};
 use soroban_sdk::{vec, Address, Bytes, BytesN, Env, String};
 
@@ -411,15 +411,35 @@ fn test_zkp_valid_commitment_passes() {
     let circuit_id = String::from_str(&env, "c1");
     let vk = BytesN::from_array(&env, &[7u8; 32]);
     let pk = BytesN::from_array(&env, &[8u8; 32]);
-    client.register_circuit(&admin, &circuit_id, &ZKPType::SNARK, &1, &1, &10, &128, &vk, &pk, &false);
+    client.register_circuit(
+        &admin,
+        &circuit_id,
+        &ZKPType::SNARK,
+        &1,
+        &1,
+        &10,
+        &128,
+        &vk,
+        &pk,
+        &false,
+    );
 
     let inputs = vec![&env, Bytes::from_slice(&env, b"pub_input")];
     let proof_data = make_proof_data(&env, &vk, &inputs);
     let proof_id = BytesN::from_array(&env, &[9u8; 32]);
     let submitter = Address::generate(&env);
 
-    client.submit_zkp(&submitter, &proof_id, &ZKPType::SNARK, &ZKPHashFunction::Poseidon,
-        &circuit_id, &inputs, &proof_data, &vk, &10_000);
+    client.submit_zkp(
+        &submitter,
+        &proof_id,
+        &ZKPType::SNARK,
+        &ZKPHashFunction::Poseidon,
+        &circuit_id,
+        &inputs,
+        &proof_data,
+        &vk,
+        &10_000,
+    );
     assert!(client.get_verification_result(&proof_id).is_valid);
 }
 
@@ -443,7 +463,14 @@ fn test_zkp_empty_proof_data_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -467,7 +494,14 @@ fn test_zkp_short_proof_data_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -497,7 +531,14 @@ fn test_zkp_wrong_vk_hash_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -527,7 +568,14 @@ fn test_zkp_wrong_inputs_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -552,7 +600,14 @@ fn test_zkp_empty_public_inputs_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -577,7 +632,14 @@ fn test_zkp_empty_input_element_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -606,7 +668,14 @@ fn test_zkp_tampered_first_commitment_byte_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -635,7 +704,14 @@ fn test_zkp_tampered_last_commitment_byte_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -661,7 +737,14 @@ fn test_zkp_all_zero_commitment_rejected() {
     };
     let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
     let exp = make_expiration_payload(&env, 2_000_000);
-    let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
+    let r = client.try_create_credential_proof(
+        &holder,
+        &ctype,
+        &issuer,
+        &bad_proof,
+        &good_proof,
+        &exp,
+    );
     assert_eq!(r, Err(Ok(Error::InvalidProof)));
 }
 
@@ -703,8 +786,18 @@ fn test_zkp_bulletproof_type_passes() {
     let holder = Address::generate(&env);
     let issuer = Address::generate(&env);
     let ctype = String::from_str(&env, "bp_type");
-    let p1 = make_proof(&env, b"validity", ZKPType::Bulletproof, ZKPHashFunction::Poseidon);
-    let p2 = make_proof(&env, b"attr", ZKPType::Bulletproof, ZKPHashFunction::Poseidon);
+    let p1 = make_proof(
+        &env,
+        b"validity",
+        ZKPType::Bulletproof,
+        ZKPHashFunction::Poseidon,
+    );
+    let p2 = make_proof(
+        &env,
+        b"attr",
+        ZKPType::Bulletproof,
+        ZKPHashFunction::Poseidon,
+    );
     let exp = make_expiration_payload(&env, 2_000_000);
     client.create_credential_proof(&holder, &ctype, &issuer, &p1, &p2, &exp);
     assert!(client.get_credential_proof(&holder, &ctype).is_verified);
@@ -718,8 +811,18 @@ fn test_zkp_pedersen_type_passes() {
     let holder = Address::generate(&env);
     let issuer = Address::generate(&env);
     let ctype = String::from_str(&env, "ped_type");
-    let p1 = make_proof(&env, b"validity", ZKPType::PedersenCommitment, ZKPHashFunction::MiMC);
-    let p2 = make_proof(&env, b"attr", ZKPType::PedersenCommitment, ZKPHashFunction::MiMC);
+    let p1 = make_proof(
+        &env,
+        b"validity",
+        ZKPType::PedersenCommitment,
+        ZKPHashFunction::MiMC,
+    );
+    let p2 = make_proof(
+        &env,
+        b"attr",
+        ZKPType::PedersenCommitment,
+        ZKPHashFunction::MiMC,
+    );
     let exp = make_expiration_payload(&env, 2_000_000);
     client.create_credential_proof(&holder, &ctype, &issuer, &p1, &p2, &exp);
     assert!(client.get_credential_proof(&holder, &ctype).is_verified);
@@ -863,7 +966,18 @@ fn test_zkp_property_any_single_input_byte_flip_rejected() {
         };
         let good_proof = make_proof(&env, b"attr", ZKPType::SNARK, ZKPHashFunction::Poseidon);
         let exp = make_expiration_payload(&env, 2_000_000);
-        let r = client.try_create_credential_proof(&holder, &ctype, &issuer, &bad_proof, &good_proof, &exp);
-        assert_eq!(r, Err(Ok(Error::InvalidProof)), "bit flip at byte {i} should fail");
+        let r = client.try_create_credential_proof(
+            &holder,
+            &ctype,
+            &issuer,
+            &bad_proof,
+            &good_proof,
+            &exp,
+        );
+        assert_eq!(
+            r,
+            Err(Ok(Error::InvalidProof)),
+            "bit flip at byte {i} should fail"
+        );
     }
 }

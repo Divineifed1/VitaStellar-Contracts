@@ -31,10 +31,7 @@ pub fn verify_commitment(env: &Env, proof: &ZKProof) -> Result<(), Error> {
     let expected = proof_commitment(env, &proof.vk_hash, &proof.public_inputs);
     let expected_arr = expected.to_array();
     for i in 0u32..32u32 {
-        let actual = proof
-            .proof_data
-            .get(i)
-            .ok_or(Error::InvalidProof)?;
+        let actual = proof.proof_data.get(i).ok_or(Error::InvalidProof)?;
         if actual != expected_arr[i as usize] {
             return Err(Error::InvalidProof);
         }

@@ -4,9 +4,12 @@
 mod test;
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Map, String, Symbol,
+    contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Map, String, Symbol,
     Vec,
 };
+
+/// Maximum number of items allowed in batch operations.
+const MAX_BATCH_SIZE: u32 = 256;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[contracttype]
@@ -93,6 +96,14 @@ pub struct FormalVerificationSummary {
     pub proved: bool,
     pub proof_ref: String,
     pub checked_at: u64,
+}
+
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum Error {
+    NotAuthorized = 1,
+    BatchTooLarge = 2,
 }
 
 #[derive(Clone)]
@@ -235,9 +246,13 @@ impl AuditForensicsContract {
         analysis_mode: String,
         rule_ids: Vec<u64>,
         ml_confidence_bps: u32,
-    ) -> u64 {
+    ) -> Result<u64, Error> {
         caller.require_auth();
-        Self::require_admin(&env, &caller);
+        Self::require_admin(&env, &caller)?;
+
+        if rule_ids.len() > MAX_BATCH_SIZE {
+            return Err(Error::BatchTooLarge);
+        }
 
         let execution_id = Self::next_counter(&env, &DataKey::NextExecutionId);
         let started_at = env.ledger().timestamp();
@@ -601,11 +616,12 @@ impl AuditForensicsContract {
     }
 
     #[allow(clippy::panic, clippy::unwrap_used)] // Unwrap is intentionally used in this contract context
-    fn require_admin(env: &Env, actor: &Address) {
+    fn require_admin(env: &Env, actor: &Address) -> Result<(), Error> {
         let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
         if admin != *actor {
-            panic!("Not authorized");
+            return Err(Error::NotAuthorized);
         }
+        Ok(())
     }
 
     fn log_internal(env: &Env, actor: Address, action: AuditAction, record_id: Option<u64>) {

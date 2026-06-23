@@ -17,4 +17,6 @@ pub enum Error {
     /// Raised when `reentrancy::enter` returns `false` because the lock is
     /// already held — i.e. a guarded function was re-entered mid-call.
     ReentrantCall = 5,
+    /// Batch operation exceeded the maximum allowed number of elements.
+    BatchTooLarge = 6,
 }

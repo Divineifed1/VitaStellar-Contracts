@@ -5,6 +5,10 @@ use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env,
 };
 
+/// Maximum number of items allowed in batch operations.
+/// Can be overridden per-contract via configuration if needed.
+const MAX_BATCH_SIZE: u32 = 256;
+
 const MAX_METADATA_HASH_SIZE: u32 = 32;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -44,6 +48,7 @@ pub enum Error {
     InvalidExpiry = 7,
     InvalidMetadata = 8,
     InvalidSignature = 9,
+    BatchTooLarge = 10,
 }
 
 #[contract]
@@ -238,7 +243,7 @@ impl CredentialRegistryContract {
             .unwrap_or(false)
     }
 
-    pub fn batch_set_credential_roots(
+pub fn batch_set_credential_roots(
         env: Env,
         caller: Address,
         issuer: Address,
@@ -250,6 +255,15 @@ impl CredentialRegistryContract {
         caller.require_auth();
         Self::require_initialized(&env)?;
         Self::require_issuer_manager(&env, &caller, &issuer)?;
+
+        if roots.len() > MAX_BATCH_SIZE {
+            return Err(Error::BatchTooLarge);
+        }
+
+        let len = roots.len();
+        if len != metadata_hashes.len() || len != expiries.len() || len != signatures.len() {
+            return Err(Error::InvalidCredentialId);
+        }
 
         let len = roots.len();
         if len != metadata_hashes.len() || len != expiries.len() || len != signatures.len() {

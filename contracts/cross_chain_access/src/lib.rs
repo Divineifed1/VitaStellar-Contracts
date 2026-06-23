@@ -204,6 +204,7 @@ pub enum DataKey {
 }
 
 // Constants
+const MAX_BATCH_SIZE: u32 = 256;
 const DEFAULT_GRANT_DURATION: u64 = 2_592_000; // 30 days
 const REQUEST_EXPIRY: u64 = 86_400; // 24 hours
 const DEFAULT_SWAP_DURATION: u64 = 3_600; // 1 hour timelock
@@ -237,6 +238,7 @@ pub enum Error {
     SwapNotFound = 21,
     SwapExpired = 22,
     SwapAlreadyProcessed = 23,
+    BatchTooLarge = 24,
 }
 
 #[contract]
@@ -293,6 +295,10 @@ impl CrossChainAccessContract {
     ) -> Result<u64, Error> {
         grantor.require_auth();
         Self::require_not_paused(&env)?;
+
+        if conditions.len() > MAX_BATCH_SIZE {
+            return Err(Error::BatchTooLarge);
+        }
 
         let now = env.ledger().timestamp();
         let grant_id = Self::get_and_increment_grant_count(&env)?;
@@ -362,6 +368,10 @@ impl CrossChainAccessContract {
         caller.require_auth();
         Self::require_not_paused(&env)?;
 
+        if new_conditions.len() > MAX_BATCH_SIZE {
+            return Err(Error::BatchTooLarge);
+        }
+
         let mut grants: Map<u64, AccessGrant> = env
             .storage()
             .persistent()
@@ -424,6 +434,10 @@ impl CrossChainAccessContract {
         is_emergency: bool,
     ) -> Result<u64, Error> {
         Self::require_not_paused(&env)?;
+
+        if requested_records.len() > MAX_BATCH_SIZE {
+            return Err(Error::BatchTooLarge);
+        }
 
         let now = env.ledger().timestamp();
         let request_id = Self::get_and_increment_request_count(&env)?;

@@ -4,6 +4,9 @@ use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, Address, Env, Vec,
 };
 
+/// Maximum number of items allowed in batch operations.
+const MAX_BATCH_SIZE: u32 = 256;
+
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
@@ -16,6 +19,7 @@ pub enum Error {
     HealthcareReputationContractNotFound = 6,
     InvalidScoreMapping = 7,
     SyncFailed = 8,
+    BatchTooLarge = 9,
 }
 
 #[contracttype]
@@ -160,7 +164,7 @@ impl ReputationIntegration {
         Ok(combined_score)
     }
 
-    // Batch sync multiple providers
+// Batch sync multiple providers
     pub fn batch_sync_providers(
         env: Env,
         admin: Address,
@@ -168,6 +172,24 @@ impl ReputationIntegration {
     ) -> Result<Vec<i128>, Error> {
         admin.require_auth();
         Self::require_initialized(&env)?;
+
+        if providers.len() > MAX_BATCH_SIZE {
+            return Err(Error::BatchTooLarge);
+        }
+
+        let mut results = Vec::new(&env);
+        for provider in providers.iter() {
+            match Self::sync_provider_reputation(env.clone(), admin.clone(), provider.clone()) {
+                Ok(score) => results.push_back(score),
+                Err(_) => {
+                    // Continue with other providers even if one fails
+                    results.push_back(0);
+                },
+            }
+        }
+
+        Ok(results)
+    }
 
         let mut results = Vec::new(&env);
         for provider in providers.iter() {

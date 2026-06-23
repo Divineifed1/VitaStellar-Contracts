@@ -16,4 +16,5 @@ pub enum Error {
     Paused = 10,
     ReplayDetected = 11,
     InsufficientFunds = 500,
+    BatchTooLarge = 501,
 }

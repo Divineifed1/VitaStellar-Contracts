@@ -4,6 +4,9 @@ use crate::storage::*;
 use crate::types::*;
 use soroban_sdk::{contract, contractimpl, contractmeta, token, Address, Env, Vec};
 
+/// Maximum number of items allowed in batch operations.
+const MAX_BATCH_SIZE: u32 = 256;
+
 contractmeta!(
     key = "Description",
     val = "Token Vesting Contract with Cliff and Linear Release"
@@ -172,16 +175,20 @@ impl VestingContract {
         cliff_duration: u64,
         vesting_duration: u64,
         amounts: Vec<u128>,
-    ) {
+    ) -> Result<(), Error> {
         let owner = get_owner(&env);
         owner.require_auth();
+
+        if beneficiaries.len() > MAX_BATCH_SIZE || amounts.len() > MAX_BATCH_SIZE {
+            return Err(Error::BatchTooLarge);
+        }
 
         assert!(
             beneficiaries.len() == amounts.len(),
             "Mismatched array lengths"
         );
 
-        for i in 0..beneficiaries.len() {
+for i in 0..beneficiaries.len() {
             let beneficiary = beneficiaries.get(i).unwrap();
             let amount = amounts.get(i).unwrap();
 
@@ -193,6 +200,9 @@ impl VestingContract {
                 amount,
             );
         }
+        Ok(())
+    }
+        Ok(())
     }
 
     /// Emergency function to update vesting schedule (use with caution)

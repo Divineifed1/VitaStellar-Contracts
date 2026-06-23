@@ -17,6 +17,9 @@ const ROLE_AUDITOR: u32 = 4;
 const ROLE_CONFIDENTIAL: u32 = 8;
 const ALL_ROLES: u32 = ROLE_INDEXER | ROLE_SEARCHER | ROLE_AUDITOR | ROLE_CONFIDENTIAL;
 
+/// Maximum number of items allowed in batch operations.
+const MAX_BATCH_SIZE: u32 = 256;
+
 const ADMIN: Symbol = symbol_short!("ADMIN");
 const PAUSED: Symbol = symbol_short!("PAUSED");
 const QUERY_ID: Symbol = symbol_short!("QUERY_ID");
@@ -157,6 +160,7 @@ pub enum Error {
     RecordNotIndexed = 6,
     QueryTooLarge = 7,
     CacheMiss = 8,
+    BatchTooLarge = 9,
 }
 
 #[contract]
@@ -295,7 +299,7 @@ impl MedicalRecordSearchContract {
         Ok(true)
     }
 
-    pub fn batch_index_records(
+pub fn batch_index_records(
         env: Env,
         caller: Address,
         inputs: Vec<IndexInput>,
@@ -305,8 +309,8 @@ impl MedicalRecordSearchContract {
         if inputs.is_empty() {
             return Err(Error::InvalidInput);
         }
-        if inputs.len() > 100 {
-            return Err(Error::QueryTooLarge);
+        if inputs.len() > MAX_BATCH_SIZE {
+            return Err(Error::BatchTooLarge);
         }
 
         let mut indexed = 0u32;

@@ -4,6 +4,9 @@
 #[cfg(test)]
 mod test;
 
+mod recursive_proof;
+mod verifier;
+
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, Address, Bytes, BytesN, Env,
     String, Symbol, Vec,
@@ -558,7 +561,7 @@ impl ZKPRegistry {
         }
     }
 
-    fn verify_zkp_internal(_env: &Env, proof: &ZKProof) -> Result<bool, Error> {
+    fn verify_zkp_internal(env: &Env, proof: &ZKProof) -> Result<bool, Error> {
         if proof.proof_data.is_empty() || proof.proof_data.len() < 32 {
             return Err(Error::InvalidProof);
         }
@@ -571,20 +574,16 @@ impl ZKPRegistry {
             }
         }
 
-        let verification_cost = match proof.proof_type {
-            ZKPType::SNARK => match proof.hash_function {
-                ZKPHashFunction::Poseidon => 50_000,
-                ZKPHashFunction::MiMC => 45_000,
-                ZKPHashFunction::SHA256 => 80_000,
-                ZKPHashFunction::Rescue => 55_000,
-            },
-            ZKPType::STARK => 90_000,
-            ZKPType::Bulletproof => 30_000,
-            ZKPType::PedersenCommitment => 20_000,
-            ZKPType::Recursive => 95_000,
-        };
+        // Cryptographic commitment check: proof_data[0..32] must equal the
+        // canonical SHA256 commitment over (vk_hash, public_inputs).
+        verifier::verify_commitment(env, proof)?;
 
-        Ok(verification_cost <= 100_000)
+        env.events().publish(
+            (symbol_short!("zkp"), symbol_short!("zk_ok")),
+            proof.vk_hash.clone(),
+        );
+
+        Ok(true)
     }
 
     fn verify_range_proof_internal(_env: &Env, proof: &RangeProof) -> Result<bool, Error> {
@@ -597,13 +596,13 @@ impl ZKPRegistry {
         Ok(true)
     }
 
-    fn verify_recursive_proof_internal(_env: &Env, proof: &RecursiveProof) -> Result<bool, Error> {
-        if proof.recursive_proof.proof_data.is_empty() {
-            return Ok(false);
+    fn verify_recursive_proof_internal(env: &Env, proof: &RecursiveProof) -> Result<bool, Error> {
+        if proof.composition_depth == 0 || proof.composition_depth > 10 {
+            return Err(Error::RecursiveDepthExceeded);
         }
-        if proof.composition_depth > 10 {
-            return Ok(false);
-        }
+        // Cryptographic commitment check: aggregated_vk[0..32] must bind to
+        // base_proof_id, recursive_proof.vk_hash, and composition_depth.
+        recursive_proof::verify_recursive_step(env, proof)?;
         Ok(true)
     }
 
